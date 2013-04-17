@@ -170,10 +170,6 @@ Two actual ways to declare Objects with Type :
 	the returned class shall be the last of passed parameters, once registered.
 	Here, the first 'var Example = Pkg.write(...' stores the Example Class definition passed in last.
 
-
-	
-	
-	
 	
 Fine about the declaring, let's pass to potential needs of yours along with that system.
 
@@ -181,32 +177,34 @@ Any anonymous object can be passed to Type.define or Pkg.write, those two will j
 and treat them consequently.
 
 Key-properties :
-	- pkg
-	- domain
-	- constructor
-	- protoinit
-	- statics
-	- inherits
-	- interfaces
+- pkg
+- domain
+- constructor
+- protoinit
+- statics
+- inherits
+- interfaces
 	
 
 Pkg - Namespace as a string
-	As you may understand, redundant pkg specifications are to avoid for clarity, 
-	so this pkg property is mostly unrequested except some cases.
-	When pkg is defined previously, such as Pkg.write('custom.ns', myClass) no need for Pkg property.
-	Only requested if either you want to make deeper pkg inside of previously declared Pkg, 
-	or if you have no constructor for example, and wish to pass the name of your class object this way :
-		
-		Pkg.write('custom.utils', {
-			pkg:'::StringUtil',
-			statics:{
-				test:function test(){...}
-			}
-		}
+=
+As you may understand, redundant pkg specifications are to avoid for clarity, 
+so this pkg property is mostly unrequested except some cases.
+When pkg is defined previously, such as Pkg.write('custom.ns', myClass) no need for Pkg property.
+Only requested if either you want to make deeper pkg inside of previously declared Pkg, 
+or if you have no constructor for example, and wish to pass the name of your class object this way :
 	
-		// Class StringUtil exists
+	Pkg.write('custom.utils', {
+		pkg:'::StringUtil',
+		statics:{
+			test:function test(){...}
+		}
+	}
+
+	// Class StringUtil exists
 		
 Domain - object's storing domain. Potentially any object
+=
 The domain property let you choose which scope to push the shorthand alias to, between 3 modes :
 - in window.
 - in Type.appdomain, that is naturally set to be window, but can be changed.
@@ -214,6 +212,7 @@ The domain property let you choose which scope to push the shorthand alias to, b
 - in none, only accessible via namespaces selectors.
 	
 Constructor - Function
+=
 OK, so here is some of the trick, we'll have REAL instanceof checks because our 'anonymous' object
 is passed WITH a constructor, so he already kind of leaves anonymous state, that's why it is good practice to 
 further name even that constructor's function body ( constructor:function Myclass()... ).
@@ -253,18 +252,21 @@ but it is really good advice to put everywhere and please His Majesty IE, as we 
 	
 	
 Statics
+=
 Statics is another anonymous object that lists all static methods and properties you want for your class.
 if the 'initialize' method figures, it shall be launched just as it is registered as a Definition.
 	
 	
 	
 Protoinit
+=
 The protoinit is the same as the statics initialize, but will occur before the static initialize, and will 
 be scoped on the prototype definition instead of the class definition.
 	
 	
 	
 Inherits
+=
 The way to extend a superclass.
 accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
 that we will examine later.
@@ -272,6 +274,7 @@ that we will examine later.
 	
 	
 Interfaces
+=
 As in most OOP languages, interfaces can be declared in order to crash app in case of 
 incorrect/missing implementation subclasses.
 Note : The implement checking execution occurs at end of Class creation, allowing you to have dynamic 
