@@ -187,7 +187,7 @@ Key-properties :
 	
 
 Pkg - Namespace as a string
-======
+
 As you may understand, redundant pkg specifications are to avoid for clarity, 
 so this pkg property is mostly unrequested except some cases.
 When pkg is defined previously, such as Pkg.write('custom.ns', myClass) no need for Pkg property.
@@ -202,9 +202,9 @@ or if you have no constructor for example, and wish to pass the name of your cla
 	}
 
 	// Class StringUtil exists
-		
-Domain - object's storing domain. Potentially any object
-======
+
+Domain - Object
+
 The domain property let you choose which scope to push the shorthand alias to, between 3 modes :
 - in window.
 - in Type.appdomain, that is naturally set to be window, but can be changed.
@@ -212,7 +212,7 @@ The domain property let you choose which scope to push the shorthand alias to, b
 - in none, only accessible via namespaces selectors.
 	
 Constructor - Function
-======
+
 OK, so here is some of the trick, we'll have REAL instanceof checks because our 'anonymous' object
 is passed WITH a constructor, so he already kind of leaves anonymous state, that's why it is good practice to 
 further name even that constructor's function body ( constructor:function Myclass()... ).
@@ -252,29 +252,34 @@ but it is really good advice to put everywhere and please His Majesty IE, as we 
 	
 	
 Statics - Object
-======
+
 Statics is another anonymous object that lists all static methods and properties you want for your class.
 if the 'initialize' method figures, it shall be launched just as it is registered as a Definition.
+initialize(definition, domain){
+	trace(definition) ; // first argument is the Class Model Object
+	trace(domain) ; // second is its allocation Domain
+}
 	
 	
-	
-Protoinit - Function
-======
+Protoinit - Function protoinit()
+
 The protoinit is the same as the statics initialize, but will occur before the static initialize, and will 
 be scoped on the prototype definition instead of the class definition.
-	
-	
-	
+protoinit(proto, domain){
+	trace(proto) ; // first argument is the Class Prototype
+	trace(domain) ; // second is its allocation Domain
+}
+
+
 Inherits - Object
-======
+
 The way to extend a superclass.
 accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
 that we will examine later.
-	
-	
-	
+
+
 Interfaces - Array
-======
+
 As in most OOP languages, interfaces can be declared in order to crash app in case of 
 incorrect/missing implementation subclasses.
 Note : The implement checking execution occurs at end of Class creation, allowing you to have dynamic 
@@ -294,7 +299,28 @@ The recommended way of declaring interfaces :
 		inherits:IAbstractExample
 	}) ;
 
+... later...
+	
+	
+	var Example = Pkg.write(
+		'com.example.mypkg.examples', 
+		{
+			domain:window,
+			inherits:'com.example.mypkg.examples::AbstractExample',
+			interfaces:[IExample],
+			constructor:Example = function Example(id){
+				Example.base.apply(this, arguments) ;
+			},
+			// methodToImplement:function methodToImplement(msg){} // commenting this in order to make it crash...
+			destroy:function destroy(){
+				trace('example destroyed...') ;
+				return undefined ;
+			}
+		}
+	) ;
 
+	// OUTPUTS
+	// TypeError:  NotImplementedMethodException com.example.mypkg.examples.@IExample::methodToImplement() absent from class com.example.mypkg.examples::Example
 
 
 
