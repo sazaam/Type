@@ -1,11 +1,12 @@
 Type
 ====
 
-Essential Core Type and Packages for Javascript
-
+Essential Type and Packages for Javascript
+==
 
 
 Introduction :
+===
 
 Type is an attempt to bring heavy OOP into Javascript, providing 
 Class-like practices, Inheritance, Type declarations and checks.
@@ -53,7 +54,7 @@ Basically, good features of this solution are :
 		
 		
 Overview :
-
+===
 
 Two actual ways to declare Objects with Type :
 
@@ -174,125 +175,130 @@ Two actual ways to declare Objects with Type :
 	
 	
 	
-	Fine about the declaring, let's pass to potential needs of yours along with that system.
+Fine about the declaring, let's pass to potential needs of yours along with that system.
+
+Any anonymous object can be passed to Type.define or Pkg.write, those two will just check for a few properties in'em 
+and treat them consequently.
+
+Key-properties :
+	- pkg
+	- domain
+	- constructor
+	- protoinit
+	- statics
+	- inherits
+	- interfaces
 	
-	Any anonymous object can be passed to Type.define or Pkg.write, those two will just check for a few properties in'em 
-	and treat them consequently.
-	
-	Key-properties :
-		- pkg
-		- domain
-		- constructor
-		- protoinit
-		- statics
-		- inherits
-		- interfaces
+
+Pkg - Namespace as a string
+	As you may understand, redundant pkg specifications are to avoid for clarity, 
+	so this pkg property is mostly unrequested except some cases.
+	When pkg is defined previously, such as Pkg.write('custom.ns', myClass) no need for Pkg property.
+	Only requested if either you want to make deeper pkg inside of previously declared Pkg, 
+	or if you have no constructor for example, and wish to pass the name of your class object this way :
 		
-	
-	Pkg - Namespace as a string
-		As you may understand, redundant pkg specifications are to avoid for clarity, 
-		so this pkg property is mostly unrequested except some cases.
-		When pkg is defined previously, such as Pkg.write('custom.ns', myClass) no need for Pkg property.
-		Only requested if either you want to make deeper pkg inside of previously declared Pkg, 
-		or if you have no constructor for example, and wish to pass the name of your class object this way :
-			
-			Pkg.write('custom.utils', {
-				pkg:'::StringUtil',
-				statics:{
-					test:function test(){...}
-				}
+		Pkg.write('custom.utils', {
+			pkg:'::StringUtil',
+			statics:{
+				test:function test(){...}
 			}
+		}
+	
+		// Class StringUtil exists
 		
-			// Class StringUtil exists
-			
-	Domain - object's storing domain. Potentially any object
-	The domain property let you choose which scope to push the shorthand alias to, between 3 modes :
-	- in window.
-	- in Type.appdomain, that is naturally set to be window, but can be changed.
-	- in Type.globals, which is the considered private globals of your needs if you need a separate space.
-	- in none, only accessible via namespaces selectors.
-		
-	Constructor - Function
-	OK, so here is some of the trick, we'll have REAL instanceof checks because our 'anonymous' object
-	is passed WITH a constructor, so he already kind of leaves anonymous state, that's why it is good practice to 
-	further name even that constructor's function body ( constructor:function Myclass()... ).
-	This constructor property won't be changed and will remain as well the own Class' constructor.
-	There is important point on constructor.
-	IE < 7 has very issues understanding constructor notions like everybody, and thus when you have :
+Domain - object's storing domain. Potentially any object
+The domain property let you choose which scope to push the shorthand alias to, between 3 modes :
+- in window.
+- in Type.appdomain, that is naturally set to be window, but can be changed.
+- in Type.globals, which is the considered private globals of your needs if you need a separate space.
+- in none, only accessible via namespaces selectors.
+	
+Constructor - Function
+OK, so here is some of the trick, we'll have REAL instanceof checks because our 'anonymous' object
+is passed WITH a constructor, so he already kind of leaves anonymous state, that's why it is good practice to 
+further name even that constructor's function body ( constructor:function Myclass()... ).
+This constructor property won't be changed and will remain as well the own Class' constructor.
+There is important point on constructor.
+IE < 7 has very issues understanding constructor notions like everybody, and thus when you have :
+
+
+	var MyClass = function MyClass(){
+			trace(MyClass.staticProp) // exists., and MyClass is really a Class, The Class.
+	} ;
+
+
+but here :
+
+	function MyClass(){
+		trace(MyClass.staticProp) // MyClass is a temporary clone-or-so of the future object, but 
+		// for now won't know the full class model - is just a closure.
+	} ;
+
+So for IE < 7, we need not to forget to rewrite the function name with a variable of same name,
+just to ensure we're really talking to the desired fella.
+in the anonymous object case :
+
+	var MyClass = Type.define({
+		inherits:'test::MyClassSuperClass',
+		constructor:Myclass = function MyClass(){
+			// in that case, you'll have full access to Object's Static Model
+			Myclass.base.apply(this, arguments) ; // a proper super() simulation
+			// Myclass really is the definition, even in IE.
+		}
+	]) ;
+
+If you don't need the super() feature in constructor (but you'll need it), you can omit this part,
+but it is really good advice to put everywhere and please His Majesty IE, as we know its pickyness.
 	
 	
-		var MyClass = function MyClass(){
-				trace(MyClass.staticProp) // exists., and MyClass is really a Class, The Class.
-		} ;
+	
+Statics
+Statics is another anonymous object that lists all static methods and properties you want for your class.
+if the 'initialize' method figures, it shall be launched just as it is registered as a Definition.
 	
 	
-	but here :
 	
-		function MyClass(){
-			trace(MyClass.staticProp) // MyClass is a temporary clone-or-so of the future object, but 
-			// for now won't know the full class model - is just a closure.
-		} ;
+Protoinit
+The protoinit is the same as the statics initialize, but will occur before the static initialize, and will 
+be scoped on the prototype definition instead of the class definition.
 	
-	So for IE < 7, we need not to forget to rewrite the function name with a variable of same name,
-	just to ensure we're really talking to the desired fella.
-	in the anonymous object case :
 	
-		var MyClass = Type.define({
-			inherits:'test::MyClassSuperClass',
-			constructor:Myclass = function MyClass(){
-				// in that case, you'll have full access to Object's Static Model
-				Myclass.base.apply(this, arguments) ; // a proper super() simulation
-				// Myclass really is the definition, even in IE.
-			}
-		]) ;
 	
-	If you don't need the super() feature in constructor (but you'll need it), you can omit this part,
-	but it is really good advice to put everywhere and please His Majesty IE, as we know its pickyness.
-		
-		
-		
-	Statics
-	Statics is another anonymous object that lists all static methods and properties you want for your class.
-	if the 'initialize' method figures, it shall be launched just as it is registered as a Definition.
-		
-		
-		
-	Protoinit
-	The protoinit is the same as the statics initialize, but will occur before the static initialize, and will 
-	be scoped on the prototype definition instead of the class definition.
-		
-		
-		
-	Inherits
-	The way to extend a superclass.
-	accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
-	that we will examine later.
-		
-		
-		
-	Interfaces
-	As in most OOP languages, interfaces can be declared in order to crash app in case of 
-	incorrect/missing implementation subclasses.
-	Note : The implement checking execution occurs at end of Class creation, allowing you to have dynamic 
-	implementations at Model-parsing, Protoinit, or static declaration states, before the class checks for 
-	having right implementation methods...
-	The recommended way of declaring interfaces :
+Inherits
+The way to extend a superclass.
+accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
+that we will examine later.
 	
-		var IAbstractExample = Type.define({
-			pkg:'com.example.mypkg.examples::@IAbstractExample',
-			methodToImplement:function methodToImplement(msg){}
-		}) ;
-		
-		// Interfaces can be extent as well and thus inherit methods from superinterface
-		
-		var IExample = Type.define({
-			pkg:'com.example.mypkg.examples::@IExample',
-			inherits:IAbstractExample
-		}) ;
-		
-		
-		
-		
+	
+	
+Interfaces
+As in most OOP languages, interfaces can be declared in order to crash app in case of 
+incorrect/missing implementation subclasses.
+Note : The implement checking execution occurs at end of Class creation, allowing you to have dynamic 
+implementations at Model-parsing, Protoinit, or static declaration states, before the class checks for 
+having right implementation methods...
+The recommended way of declaring interfaces :
+
+	var IAbstractExample = Type.define({
+		pkg:'com.example.mypkg.examples::@IAbstractExample',
+		methodToImplement:function methodToImplement(msg){}
+	}) ;
+	
+	// Interfaces can be extent as well and thus inherit methods from superinterface
+	
+	var IExample = Type.define({
+		pkg:'com.example.mypkg.examples::@IExample',
+		inherits:IAbstractExample
+	}) ;
+
+
+
+
+
+Public API
+===
+
+
 The output Class Object's small API :
 	
 As seen earlier, output Class Object have few notable API Elements you may need :
@@ -325,27 +331,27 @@ Type and Pkg have few static methods and props to dialog easier with these class
 and perform checks onto them :
 
 Type :
-- globals
-- appdomain
-- guid
-- format
-- hash
-- define
-- implement
-- is
-- definition
- getType
-- getQualifiedClassName
-- getFullQualifiedClassName
-- getDefinitionByName
-- getDefinitionByHash
-- getAllDefinitions
+- globals : [Object] 
+- appdomain : [Object]
+- guid : [int]
+- format(type)
+- hash(qname)
+- define(properties)
+- implement(definition, interfaces)
+- is(instance, definition)
+- definition(qobj, domain)
+- getType(type)
+- getQualifiedClassName(type)
+- getFullQualifiedClassName(type)
+- getDefinitionByName(qname, domain)
+- getDefinitionByHash(hashcode)
+- getAllDefinitions()
 	
 Pkg :
-- register
-- write
-- definition
-- getAllDefinitions
+- register(path, definition)
+- write(path, obj)
+- definition(path)
+- getAllDefinitions()
 
 
 

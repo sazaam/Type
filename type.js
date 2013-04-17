@@ -12,14 +12,15 @@
 		globals:{},
 		appdomain:window,
 		guid:0,
-		format:function format(t, l){
-			if(!t) return t ; // cast away undefined & null
-			if(!!t.slot) return t ; // cast away custom classes
-			if(!!t.hashcode) return Type.getDefinitionByHash(t) ; // is a slot object
-			if(typeof t == 'number') return Type.getDefinitionByHash(t) ;
-			if(typeof t == 'string') return Type.getDefinitionByName(t) ;
-			if(!!t.slice && t.slice === sl && (l = t.length)) for(var i = 0 ; i < l ; i++) t[i] = format(t[i]) ;
-			return t ;
+		format:function format(type){
+			var l ;
+			if(!type) return type ; // cast away undefined & null
+			if(!!type.slot) return type ; // cast away custom classes
+			if(!!type.hashcode) return Type.getDefinitionByHash(type) ; // is a slot object
+			if(typeof type == 'number') return Type.getDefinitionByHash(type) ;
+			if(typeof type == 'string') return Type.getDefinitionByName(type) ;
+			if(!!type.slice && type.slice === sl && (l = type.length)) for(var i = 0 ; i < l ; i++) type[i] = format(type[i]) ;
+			return type ;
 		},
 		hash:function hash(qname){
 			for (var i = 0 , h = 0 ; i < qname.length ; i++) h = 31 * ((h << 31) - h) + qname.charCodeAt(i), h &= h ;
@@ -89,19 +90,19 @@
 			Type.implement(def, interfaces.concat(superclass.slot ? superclass.slot.interfaces || [] : []), domain) ;
 			return def ;
 		},
-		implement:function implement(def, imp, dom){
-			var c, method, cname, ints = def.slot.interfaces = def.slot.interfaces || [] ;
-			if(!!imp.slice && imp.slice === sl) {
-				for(var i = 0, l = imp.length ; i < l ; i++) {
-					c = imp[i].prototype , cname = imp[i].slot.fullqualifiedclassname ;
+		implement:function implement(definition, interfaces){
+			var c, method, cname, ints = definition.slot.interfaces = definition.slot.interfaces || [] ;
+			if(!!interfaces.slice && interfaces.slice === sl) {
+				for(var i = 0, l = interfaces.length ; i < l ; i++) {
+					c = interfaces[i].prototype , cname = interfaces[i].slot.fullqualifiedclassname ;
 					for (method in c) {
 						if(keep_r.test(method)) continue ;
-						if(!def.prototype.hasOwnProperty(method)) throw new TypeError("NotImplementedMethodException ::" + method + "() in class " + def.slot.fullqualifiedclassname) ;
+						if(!definition.prototype.hasOwnProperty(method)) throw new TypeError("NotImplementedMethodException ::" + method + "() in class " + definition.slot.fullqualifiedclassname) ;
 					}
 					ints[ints.length] = cname ;
 				}
-			}else ints[ints.length] = imp.slot.fullqualifiedclassname ;
-			return def ;
+			}else ints[ints.length] = interfaces.slot.fullqualifiedclassname ;
+			return definition ;
 		},
 		is:function is(instance, definition){ return instance instanceof definition },
 		definition:function definition(qobj, domain){return Type.getDefinitionByName(qobj, domain)},
@@ -114,21 +115,21 @@
 	}
 	
 	var Pkg = {
-		register:function register(path, def){
+		register:function register(path, definition){
 			if(arguments.length > 2){
 				var args = [].slice.call(arguments) ;
 				var pp = args.shift(), ret ;
 				for(var i = 0, l = args.length ; i < l ; i++)
 					ret = Pkg.register(pp, args[i]) ;
 				return ret;
-			}if(!!def.slot) // is already result of Type.define()
-				path = def.slot.fullqualifiedclassname ;
+			}if(!!definition.slot) // is already result of Type.define()
+				path = definition.slot.fullqualifiedclassname ;
 			else { // transform it into Type.define() result
-				def.pkg = path ;
-				def = Type.define(def) ;
-				path = def.slot.fullqualifiedclassname ;
+				definition.pkg = path ;
+				definition = Type.define(definition) ;
+				path = definition.slot.fullqualifiedclassname ;
 			}
-			return (PKG[path] = def) ;
+			return (PKG[path] = definition) ;
 		},
 		write:function write(path, obj){
 			var oldpath = Type.hackpath ;
