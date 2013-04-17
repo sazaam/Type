@@ -57,45 +57,11 @@ Overview :
 
 Two actual ways to declare Objects with Type :
 
+
 1. through Type.define
 
-	var AbstractExample = Type.define({
-		pkg:'com.example.mypkg.examples',
-		constructor:AbstractExample = function AbstractExample(id){
-			this.id = id ;
-		},
-		destroy:function destroy(){
-			trace('example destroyed...') ;
-			return undefined ;
-		}
-	}) ;
-	
-	var Example = Type.define({
-		pkg:'com.example.mypkg.examples',
-		inherits:AbstractExample,
-		constructor:Example = function Example(id){
-			Example.base.apply(this, arguments) ;
-			this.id = id ;
-		}
-	}) ;
-	
-	trace(Example) ; 
-		// [Class com.example.mypkg.examples::Example]
-	trace(Example === Type.definition('com.example.mypkg.examples::Example')) 
-		// true
-	
-	trace(ex instanceof AbstractExample) // true
-	trace(ex.destroy) ; // function destroy(...)
-	trace(ex = ex.destroy()) ; // undefined
-	
-
-2. through Pkg.write :
-	
-	
-	Pkg.write('com.example.mypkg', function(){
-		
 		var AbstractExample = Type.define({
-			pkg:'examples',
+			pkg:'com.example.mypkg.examples',
 			constructor:AbstractExample = function AbstractExample(id){
 				this.id = id ;
 			},
@@ -106,7 +72,7 @@ Two actual ways to declare Objects with Type :
 		}) ;
 		
 		var Example = Type.define({
-			pkg:'examples',
+			pkg:'com.example.mypkg.examples',
 			inherits:AbstractExample,
 			constructor:Example = function Example(id){
 				Example.base.apply(this, arguments) ;
@@ -114,18 +80,53 @@ Two actual ways to declare Objects with Type :
 			}
 		}) ;
 		
-		var ex = new Example() ;
-		
 		trace(Example) ; 
 			// [Class com.example.mypkg.examples::Example]
-		trace(Example === Pkg.definition('com.example.mypkg.examples::Example')) 
+		trace(Example === Type.definition('com.example.mypkg.examples::Example')) 
 			// true
 		
 		trace(ex instanceof AbstractExample) // true
 		trace(ex.destroy) ; // function destroy(...)
 		trace(ex = ex.destroy()) ; // undefined
-		
-	}) ;
+	
+
+2. through Pkg.write :
+	
+	
+		Pkg.write('com.example.mypkg', function(){
+			
+			var AbstractExample = Type.define({
+				pkg:'examples',
+				constructor:AbstractExample = function AbstractExample(id){
+					this.id = id ;
+				},
+				destroy:function destroy(){
+					trace('example destroyed...') ;
+					return undefined ;
+				}
+			}) ;
+			
+			var Example = Type.define({
+				pkg:'examples',
+				inherits:AbstractExample,
+				constructor:Example = function Example(id){
+					Example.base.apply(this, arguments) ;
+					this.id = id ;
+				}
+			}) ;
+			
+			var ex = new Example() ;
+			
+			trace(Example) ; 
+				// [Class com.example.mypkg.examples::Example]
+			trace(Example === Pkg.definition('com.example.mypkg.examples::Example')) 
+				// true
+			
+			trace(ex instanceof AbstractExample) // true
+			trace(ex.destroy) ; // function destroy(...)
+			trace(ex = ex.destroy()) ; // undefined
+			
+		}) ;
 	
 	
 	
@@ -133,35 +134,36 @@ Two actual ways to declare Objects with Type :
 	in an other way :
 	
 	
-	var Example = Pkg.write(
-		'com.example.mypkg.examples', 
-		{
-			domain:window,
-			constructor:function AbstractExample(id){
-				this.id = id ;
+		var Example = Pkg.write(
+			'com.example.mypkg.examples', 
+			{
+				domain:window,
+				constructor:function AbstractExample(id){
+					this.id = id ;
+				},
+				destroy:function destroy(){
+					trace('example destroyed...') ;
+					return undefined ;
+				}
 			},
-			destroy:function destroy(){
-				trace('example destroyed...') ;
-				return undefined ;
+			{
+				domain:window,
+				inherits:'com.example.mypkg.examples::AbstractExample',
+				constructor:Example = function Example(id){
+					Example.base.apply(this, arguments) ;
+				},
+				destroy:function destroy(){
+					trace('example destroyed...') ;
+					return undefined ;
+				}
 			}
-		},
-		{
-			domain:window,
-			inherits:'com.example.mypkg.examples::AbstractExample',
-			constructor:Example = function Example(id){
-				Example.base.apply(this, arguments) ;
-			},
-			destroy:function destroy(){
-				trace('example destroyed...') ;
-				return undefined ;
-			}
-		}
-	) ; 
+		) ; 
+	
+		trace(Example) ;
+		var s = new Example('sazaam') ;
+		trace(s) ;
+		trace(s instanceof AbstractExample) ;
 
-	trace(Example) ;
-	var s = new Example('sazaam') ;
-	trace(s) ;
-	trace(s instanceof AbstractExample) ;
 
 	When multiple Class declarations objects are provided sequentially to the same path location,
 	the returned class shall be the last of passed parameters, once registered.
@@ -204,76 +206,78 @@ Two actual ways to declare Objects with Type :
 			// Class StringUtil exists
 			
 	Domain - object's storing domain. Potentially any object
-		The domain property let you choose which scope to push the shorthand alias to, between 3 modes :
-		- in window.
-		- in Type.appdomain, that is naturally set to be window, but can be changed.
-		- in Type.globals, which is the considered private globals of your needs if you need a separate space.
-		- in none, only accessible via namespaces selectors.
+	The domain property let you choose which scope to push the shorthand alias to, between 3 modes :
+	- in window.
+	- in Type.appdomain, that is naturally set to be window, but can be changed.
+	- in Type.globals, which is the considered private globals of your needs if you need a separate space.
+	- in none, only accessible via namespaces selectors.
 		
 	Constructor - Function
-		OK, so here is some of the trick, we'll have REAL instanceof checks because our 'anonymous' object
-		is passed WITH a constructor, so he already kind of leaves anonymous state, that's why it is good practice to 
-		further name even that constructor's function body ( constructor:function Myclass()... ).
-		This constructor property won't be changed and will remain as well the own Class' constructor.
-		There is important point on constructor.
-		IE < 7 has very issues understanding constructor notions like everybody, and thus when you have
-		
+	OK, so here is some of the trick, we'll have REAL instanceof checks because our 'anonymous' object
+	is passed WITH a constructor, so he already kind of leaves anonymous state, that's why it is good practice to 
+	further name even that constructor's function body ( constructor:function Myclass()... ).
+	This constructor property won't be changed and will remain as well the own Class' constructor.
+	There is important point on constructor.
+	IE < 7 has very issues understanding constructor notions like everybody, and thus when you have :
+	
+	
 		var MyClass = function MyClass(){
-			trace(MyClass.staticProp) // exists., and MyClass is really a Class, The Class.
-		}
-		
-		but here :
-		
+				trace(MyClass.staticProp) // exists., and MyClass is really a Class, The Class.
+		} ;
+	
+	
+	but here :
+	
 		function MyClass(){
 			trace(MyClass.staticProp) // MyClass is a temporary clone-or-so of the future object, but 
 			// for now won't know the full class model - is just a closure.
-		}
-		
-		So for IE < 7, we need not to forget to rewrite the function name with a variable of same name,
-		just to ensure we're really talking to the desired fella.
-		in the anonymous object case :
-			var MyClass = Type.define({
-				inherits:'test::MyClassSuperClass',
-				constructor:Myclass = function MyClass(){
-					// in that case, you'll have full access to Object's Static Model
-					Myclass.base.apply(this, arguments) ; // a proper super() simulation
-					// Myclass really is the definition, even in IE.
-				}
-			]) ;
-		
-		If you don't need the super() feature in constructor (but you'll need it), you can omit this part,
-		but it is really good advice to put everywhere and please His Majesty IE, as we know its pickyness.
-		
-		
-		
-		Statics
-		Statics is another anonymous object that lists all static methods and properties you want for your class.
-		if the 'initialize' method figures, it shall be launched just as it is registered as a Definition.
+		} ;
+	
+	So for IE < 7, we need not to forget to rewrite the function name with a variable of same name,
+	just to ensure we're really talking to the desired fella.
+	in the anonymous object case :
+	
+		var MyClass = Type.define({
+			inherits:'test::MyClassSuperClass',
+			constructor:Myclass = function MyClass(){
+				// in that case, you'll have full access to Object's Static Model
+				Myclass.base.apply(this, arguments) ; // a proper super() simulation
+				// Myclass really is the definition, even in IE.
+			}
+		]) ;
+	
+	If you don't need the super() feature in constructor (but you'll need it), you can omit this part,
+	but it is really good advice to put everywhere and please His Majesty IE, as we know its pickyness.
 		
 		
 		
-		Protoinit
-		The protoinit is the same as the statics initialize, but will occur before the static initialize, and will 
-		be scoped on the prototype definition instead of the class definition.
+	Statics
+	Statics is another anonymous object that lists all static methods and properties you want for your class.
+	if the 'initialize' method figures, it shall be launched just as it is registered as a Definition.
 		
 		
 		
-		Inherits
-		The way to extend a superclass.
-		accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
-		that we will examine later.
+	Protoinit
+	The protoinit is the same as the statics initialize, but will occur before the static initialize, and will 
+	be scoped on the prototype definition instead of the class definition.
 		
 		
 		
-		Interfaces
-		As in most OOP languages, interfaces can be declared in order to crash app in case of 
-		incorrect/missing implementation subclasses.
-		Note : The implement checking execution occurs at end of Class creation, allowing you to have dynamic 
-		implementations at Model-parsing, Protoinit, or static declaration states, before the class checks for 
-		having right implementation methods...
+	Inherits
+	The way to extend a superclass.
+	accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
+	that we will examine later.
 		
-		The recommended way of declaring interfaces :
 		
+		
+	Interfaces
+	As in most OOP languages, interfaces can be declared in order to crash app in case of 
+	incorrect/missing implementation subclasses.
+	Note : The implement checking execution occurs at end of Class creation, allowing you to have dynamic 
+	implementations at Model-parsing, Protoinit, or static declaration states, before the class checks for 
+	having right implementation methods...
+	The recommended way of declaring interfaces :
+	
 		var IAbstractExample = Type.define({
 			pkg:'com.example.mypkg.examples::@IAbstractExample',
 			methodToImplement:function methodToImplement(msg){}
@@ -289,60 +293,59 @@ Two actual ways to declare Objects with Type :
 		
 		
 		
-		The output Class Object's small API :
-		
-		As seen earlier, output Class Object have few notable API Elements you may need :
-		
-		- OutputClass.base
-		- OutputClass.factory
-		- OutputClass.slot
-		
-		Base & Factory
-		
-		Base is a reference to the superclass definition itself. (the inherited superclass, not top ancestor class).
-		While Factory is reference to superclass' definition prototype.
-		
-		
-		Slot
-		
-		Slot is Type's internal way of storing package information. Existing with properties :
-		- appdomain : the context domain where class definition was first declared / stored
-		- pkg : the full path of the package containg Class definition
-		- qualifiedclassname : the short name of the Class definition
-		- fullqualifiedclassname : the full path to Class definition
-		- hashcode : the generated-unique internal identifier
-		- isinterface : a boolean that stores whether Class definition is an Interface instead.
-		
-		
-		Now its only a matter of getting used to it, and perhaps talk about the Type and Pkg objects API 
-		before ending these notes.
-		
-		Type and Pkg have few static methods and props to dialog easier with these class objects, 
-		and perform checks onto them :
-		
-		Type :
-			- globals
-			- appdomain
-			- guid
-			- format
-			- hash
-			- define
-			- implement
-			- is
-			- definition
-			- getType
-			- getQualifiedClassName
-			- getFullQualifiedClassName
-			- getDefinitionByName
-			- getDefinitionByHash
-			- getAllDefinitions
-			
-		Pkg :
-			- register
-			- write
-			- definition
-			- getAllDefinitions
-		
-		
-		
-		
+The output Class Object's small API :
+	
+As seen earlier, output Class Object have few notable API Elements you may need :
+
+- OutputClass.base
+- OutputClass.factory
+- OutputClass.slot
+
+Base & Factory
+
+Base is a reference to the superclass definition itself. (the inherited superclass, not top ancestor class).
+While Factory is reference to superclass' definition prototype.
+
+
+Slot
+
+Slot is Type's internal way of storing package information. Existing with properties :
+- appdomain : the context domain where class definition was first declared / stored
+- pkg : the full path of the package containg Class definition
+- qualifiedclassname : the short name of the Class definition
+- fullqualifiedclassname : the full path to Class definition
+- hashcode : the generated-unique internal identifier
+- isinterface : a boolean that stores whether Class definition is an Interface instead.
+
+
+Now its only a matter of getting used to it, and perhaps talk about the Type and Pkg objects API 
+before ending these notes.
+
+Type and Pkg have few static methods and props to dialog easier with these class objects, 
+and perform checks onto them :
+
+Type :
+- globals
+- appdomain
+- guid
+- format
+- hash
+- define
+- implement
+- is
+- definition
+ getType
+- getQualifiedClassName
+- getFullQualifiedClassName
+- getDefinitionByName
+- getDefinitionByHash
+- getAllDefinitions
+	
+Pkg :
+- register
+- write
+- definition
+- getAllDefinitions
+
+
+
