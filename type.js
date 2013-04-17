@@ -97,7 +97,8 @@
 					c = interfaces[i].prototype , cname = interfaces[i].slot.fullqualifiedclassname ;
 					for (method in c) {
 						if(keep_r.test(method)) continue ;
-						if(!definition.prototype.hasOwnProperty(method)) throw new TypeError("NotImplementedMethodException ::" + method + "() in class " + definition.slot.fullqualifiedclassname) ;
+						
+						if(!definition.prototype.hasOwnProperty(method)) throw new TypeError("NotImplementedMethodException "+c.constructor.slot.pkg+'.@'+c.constructor.slot.qualifiedclassname+"::" + method + "() absent from class " + definition.slot.fullqualifiedclassname) ;
 					}
 					ints[ints.length] = cname ;
 				}
@@ -177,5 +178,6 @@
 	
 	window.Type = Type ;
 	window.Pkg = Pkg ;
+	
 	
 })() ;
