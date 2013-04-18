@@ -112,11 +112,11 @@ Two actual ways to declare Objects with Type :
 				inherits:AbstractExample,
 				constructor:Example = function Example(id){
 					Example.base.apply(this, arguments) ;
-					this.id = id ;
+					trace(this.id) ; // test_example
 				}
 			}) ;
 			
-			var ex = new Example() ;
+			var ex = new Example('test_example') ;
 			
 			trace(Example) ; 
 				// [Class com.example.mypkg.examples::Example]
@@ -152,6 +152,7 @@ Two actual ways to declare Objects with Type :
 				inherits:'com.example.mypkg.examples::AbstractExample',
 				constructor:Example = function Example(id){
 					Example.base.apply(this, arguments) ;
+					trace(this.id) ; // test_example
 				},
 				destroy:function destroy(){
 					trace('example destroyed...') ;
@@ -161,7 +162,7 @@ Two actual ways to declare Objects with Type :
 		) ; 
 	
 		trace(Example) ;
-		var s = new Example('sazaam') ;
+		var s = new Example('test_example') ;
 		trace(s) ;
 		trace(s instanceof AbstractExample) ;
 
@@ -222,7 +223,7 @@ IE < 7 has very issues understanding constructor notions like everybody, and thu
 
 
 	var MyClass = function MyClass(){
-			trace(MyClass.staticProp) // exists., and MyClass is really a Class, The Class.
+		trace(MyClass.staticProp) // exists., and MyClass is really a Class, The Class.
 	} ;
 
 
@@ -310,6 +311,7 @@ The recommended way of declaring interfaces :
 			interfaces:[IExample],
 			constructor:Example = function Example(id){
 				Example.base.apply(this, arguments) ;
+				trace(this.id) ; // test_example
 			},
 			// methodToImplement:function methodToImplement(msg){} // commenting this in order to make it crash...
 			destroy:function destroy(){
@@ -326,7 +328,7 @@ The recommended way of declaring interfaces :
 And even later it could all look like this :
 	
 	
-	var Example = Pkg.write(
+	Pkg.write(
 		'com.example.mypkg.examples', 
 		{
 			pkg:'interfaces::@IAbstractExample',
@@ -352,6 +354,7 @@ And even later it could all look like this :
 			interfaces:['interfaces::IExample'],
 			constructor:Example = function Example(id){
 				Example.base.apply(this, arguments) ;
+				trace(this.id) ; // test_example
 			},
 			methodToImplement:function methodToImplement(msg){},
 			destroy:function destroy(){
@@ -361,18 +364,19 @@ And even later it could all look like this :
 		}
 	)
 
-
+	var Example = Type.definition('com.example.mypkg.examples::Example') ;
 	var s = trace(new Example('test_example')) ;
 	// object Example{id:'test_example', ...}
 	trace(s instanceof 
-		Type.getDefinitionByName('com.example.mypkg.examples.abstracts::AbstractExample')) ;
+		Type.definition('com.example.mypkg.examples.abstracts::AbstractExample')) ;
 	// true
 	
 	
-Looking closely to that last 'clean' case, we're forced to call the definition with no alias (com.examples...)
-ie with fullqualifiedclassname,
-since we didnt specify any context domain to add alias into, still registering model of these definitions in Type,
-but hiding them from Window object, which highly reduces conflictual aliases between two homonymic classes.
+Looking closely to that last 'clean' case, for the 'instanceof AbstractExample' check, one can note we're forced
+to call the definition with no alias, ie with fullqualifiedclassname via Type.definition,
+since no variables are stored, and we didnt specify any context domain to add alias into, still registering models
+of these definitions in Type cache, but hiding them from Window object, 
+which highly reduces conflictual shorthand aliases between two homonymic classes.
 
 
 
@@ -394,7 +398,9 @@ As seen earlier, output Class Object have few notable API Elements you may need 
 Base & Factory
 
 Base is a reference to the superclass definition itself. (the inherited superclass, not top ancestor class).
-While Factory is reference to superclass' definition prototype.
+While Factory is reference to superclass' definition prototype. For the super() fans, just understand that in Type
+a correct pattern is to talk to 'base' as the super() method (superclass constructor), and to 'factory' when looking for
+properties or method contained in the superclass prototype (as in super.mysupermethod).
 
 
 Slot
