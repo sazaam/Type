@@ -318,9 +318,63 @@ The recommended way of declaring interfaces :
 			}
 		}
 	) ;
-
+	
 	// OUTPUTS
 	// TypeError:  NotImplementedMethodException com.example.mypkg.examples.@IExample::methodToImplement() absent from class com.example.mypkg.examples::Example
+	
+	
+And even later it could all look like this :
+	
+	
+	var IExample = Pkg.write(
+		'com.example.mypkg.examples', 
+		{
+			pkg:'interfaces::@IAbstractExample',
+			methodToImplement:function methodToImplement(msg){}
+		},
+		{
+			pkg:'interfaces::@IExample',
+			inherits:'interfaces::IAbstractExample'
+		},
+		{
+			pkg:'abstracts',
+			constructor:function AbstractExample(id){
+				this.id = id ;
+			},
+			destroy:function destroy(){
+				trace('example destroyed...') ;
+				return undefined ;
+			}
+		},
+		{
+			inherits:'abstracts::AbstractExample',
+			interfaces:['interfaces::IExample'],
+			constructor:Example = function Example(id){
+				Example.base.apply(this, arguments) ;
+			},
+			methodToImplement:function methodToImplement(msg){},
+			destroy:function destroy(){
+				trace('example destroyed...') ;
+				return undefined ;
+			}
+		}
+	)
+
+
+	var s = trace(new Example('test_example')) ;
+	// object Example{id:'test_example', ...}
+	trace(s instanceof 
+		Type.getDefinitionByName('com.example.mypkg.examples.abstracts::AbstractExample')) ;
+	// true
+	
+	
+Looking closely to that last 'clean' case, we're forced to call the definition with no alias (com.examples...)
+ie with fullqualifiedclassname,
+since we didnt specify any context domain to add alias into, still registering model of these definitions in Type,
+but hiding them from Window object, which highly reduces conflictual aliases between two homonymic classes.
+
+
+
 
 
 

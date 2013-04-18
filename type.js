@@ -1,5 +1,6 @@
 'use strict' ;
-(function(){
+(function(included){
+	if (included) return ;
 	
 	var name_r = /function([^\(]+)/, pkg_r = /::(.+)$/, abs_r = /^\//, sl = Array.prototype.slice, DEFS = {}, PKG_SEP = '::',
 	getctorname = function(cl, name){ return (cl = cl.match(name_r))? cl[1].replace(' ', ''):'' },
@@ -7,19 +8,19 @@
 	retrieve = function retrieve(from, prop, p){ try { p = from[prop] ; return p } finally { if(prop != 'constructor') from[prop] = undefined , delete from[prop] }},
 	merge = function(from, into){ for(var s in from) if(s != 'constructor'){ into[s] = from[s]; from[s] = undefined;} },
 	toArray = function toArray(arr, p, l){	p = p || [], l = arr.length ; while(l--) p.unshift(arr[l]) ; return p },
-	PKG = {} ;
-	var Type = {
+	PKG = {} , Type, Pkg;
+	
+	Type = {
 		globals:{},
 		appdomain:window,
 		guid:0,
 		format:function format(type){
-			var l ;
 			if(!type) return type ; // cast away undefined & null
 			if(!!type.slot) return type ; // cast away custom classes
 			if(!!type.hashcode) return Type.getDefinitionByHash(type) ; // is a slot object
 			if(typeof type == 'number') return Type.getDefinitionByHash(type) ;
 			if(typeof type == 'string') return Type.getDefinitionByName(type) ;
-			if(!!type.slice && type.slice === sl && (l = type.length)) for(var i = 0 ; i < l ; i++) type[i] = format(type[i]) ;
+			if(!!type.slice && type.slice === sl) for(var i = 0, l = type.length ; i < l ; i++) type[i] = format(type[i]) ;
 			return type ;
 		},
 		hash:function hash(qname){
@@ -43,11 +44,11 @@
 			var name = def == Object ? '' : (def.name || getctorname(def.toString())).replace(/Constructor$/, '') ;
 			
 			if(pkg_r.test(pkg)) pkg = pkg.replace(pkg_r, function(){name = arguments[1]; return ''}) ;
-			if(!!Type.hackpath) pkg = abs_r.test(pkg) ? pkg.replace(abs_r, '') : pkg !='' ? Type.hackpath +'.'+ pkg : Type.hackpath ;
+			if(!!Type.hackpath) pkg = abs_r.test(pkg) ? pkg.replace(abs_r, '') : pkg !='' ? Type.hackpath +(pkg.indexOf('.') == 0 ? pkg : '.'+ pkg) : Type.hackpath ;
 			if(name == '' ) name = 'Anonymous'+(++Type.guid) ;
 			if(def == Object) def = Function('return function '+name+'(){\n\t\n}')() ;
-			// set defaults
 			
+			// set defaults
 			var writable = !!domain ;
 			domain = domain || Type.appdomain ;
 			superclass = Type.format(superclass) || Object ;
@@ -87,14 +88,18 @@
 			}
 			// static initialize
 			if(!!staticinit) staticinit.apply(def, [def, domain]) ;
-			Type.implement(def, interfaces.concat(superclass.slot ? superclass.slot.interfaces || [] : []), domain) ;
+			Type.implement(def, interfaces.concat(superclass.slot ? superclass.slot.interfaces || [] : [])) ;
 			return def ;
 		},
 		implement:function implement(definition, interfaces){
+			// trace(definition, interfaces)
 			var c, method, cname, ints = definition.slot.interfaces = definition.slot.interfaces || [] ;
 			if(!!interfaces.slice && interfaces.slice === sl) {
 				for(var i = 0, l = interfaces.length ; i < l ; i++) {
-					c = interfaces[i].prototype , cname = interfaces[i].slot.fullqualifiedclassname ;
+					var f = interfaces[i] ;
+					// trace(f)
+					c = f.prototype , cname = f.slot.fullqualifiedclassname ;
+					// trace(cname)
 					for (method in c) {
 						if(keep_r.test(method)) continue ;
 						
@@ -110,18 +115,25 @@
 		getType:function getType(type){ return (!!type.constructor && !!type.constructor.slot) ? type.constructor.slot : type.slot || 'unregistered_type'},
 		getQualifiedClassName:function getQualifiedClassName(type){ return Type.getType(type).toString() },
 		getFullQualifiedClassName:function getFullQualifiedClassName(type){ return Type.getType(type).fullqualifiedclassname },
-		getDefinitionByName:function getDefinitionByName(qname, domain){ return (domain || Type.appdomain)[qname] || Type.globals[qname] || DEFS[Type.hash(qname)]},
+		getDefinitionByName:function getDefinitionByName(qname, domain){ 
+			var absname = (Type.hackpath || '') + (qname.indexOf('::') !=-1 ? (qname.indexOf('::') == 0 ? qname : '.' + qname) : '::' + qname) ;
+			return (domain || Type.appdomain)[qname] || Type.globals[qname] || DEFS[Type.hash(qname)] || (domain || Type.appdomain)[absname] || Type.globals[absname] || DEFS[Type.hash(absname)]
+		},
 		getDefinitionByHash:function getDefinitionByHash(hashcode){ return DEFS[hashcode] },
 		getAllDefinitions:function getAllDefinitions(){ return DEFS }
 	}
 	
-	var Pkg = {
+	Pkg = {
 		register:function register(path, definition){
 			if(arguments.length > 2){
 				var args = [].slice.call(arguments) ;
-				var pp = args.shift(), ret ;
-				for(var i = 0, l = args.length ; i < l ; i++)
-					ret = Pkg.register(pp, args[i]) ;
+				var pp = args.shift(), ret, qq ;
+				
+				for(var i = 0, l = args.length ; i < l ; i++){
+					ret = args[i] ;
+					qq = ret.pkg || '' ;
+					ret = Pkg.register( (qq == '' || qq.indexOf('::') != -1 ? qq :'.' + qq ), args[i]) ;
+				}
 				return ret;
 			}if(!!definition.slot) // is already result of Type.define()
 				path = definition.slot.fullqualifiedclassname ;
@@ -134,6 +146,7 @@
 		},
 		write:function write(path, obj){
 			var oldpath = Type.hackpath ;
+			Type.hackpath = !!oldpath && !abs_r.test(path) ? oldpath + '.' +path : path.replace(abs_r, '') ;
 			try{
 				// if obj is an Array
 				if(obj.slice === sl) {
@@ -145,7 +158,6 @@
 				// if a function is passed
 				else if(typeof obj == 'function'){
 					if(!!obj.slot) return Pkg.register(path, obj) ;
-					Type.hackpath = !!oldpath && !abs_r.test(path) ? oldpath + '.' +path : path.replace(abs_r, '') ;
 					var o = new (obj)(path) ;
 					if(o.slice === sl){
 						for(var i = 0 ; i < o.length ; i++){
@@ -160,7 +172,8 @@
 				else {
 					return Pkg.register.apply(Pkg, sl.call(arguments)) ;
 				}
-			}catch(e){ trace(e) } finally {
+			}catch(e){ trace(e) }
+			finally {
 				Type.hackpath = oldpath ; if(!!!oldpath) delete Type.hackpath ;
 			}
 		},
@@ -179,5 +192,4 @@
 	window.Type = Type ;
 	window.Pkg = Pkg ;
 	
-	
-})() ;
+})(!!window.Type && !!window.Pkg) ;
