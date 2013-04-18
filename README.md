@@ -326,7 +326,7 @@ The recommended way of declaring interfaces :
 And even later it could all look like this :
 	
 	
-	Pkg.write(
+	var Example = Pkg.write(
 		'com.example.mypkg.examples', 
 		{
 			pkg:'interfaces::@IAbstractExample',
