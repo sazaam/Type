@@ -347,6 +347,7 @@ And even later it could all look like this :
 			}
 		},
 		{
+			pkg:'::Example',
 			inherits:'abstracts::AbstractExample',
 			interfaces:['interfaces::IExample'],
 			constructor:Example = function Example(id){
