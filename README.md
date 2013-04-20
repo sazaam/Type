@@ -81,6 +81,8 @@ Two actual ways to declare Objects with Type :
 			}
 		}) ;
 		
+		var ex = new Example('test_example') ;
+		
 		trace(Example) ; 
 			// [Class com.example.mypkg.examples::Example]
 		trace(Example === Type.definition('com.example.mypkg.examples::Example')) 
