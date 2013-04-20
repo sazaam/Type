@@ -1,4 +1,25 @@
+/*
+ * Type
+ * Essential Classes and Packages for Javascript
+ * 
+ * V 0.9.7
+ * 
+ * Dependancies : 
+ * 	none
+ * 
+ * An utility inspired by Mitsuhiko's Classy.js for features (https://github.com/mitsuhiko/classy)
+ * but by Ornorm for theorical key-concepts, nominations (abiendo@gmail.com) 
+ * 
+ * author saz aka True
+ * 
+ * licensed under GNU GPL-General Public License
+ * copyright sazaam[(at)gmail.com]
+ * 2012-2013
+ * 
+ */
+
 'use strict' ;
+
 (function(included){
 	if (included) return ;
 	
