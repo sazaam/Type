@@ -24,7 +24,8 @@ Basically, good features of this solution are :
 	- Private sets of classes inside of public Package decl. 
 	- Control visibility of declaration in Application Domain(s) from the declaration itself.
 	- Allows clean code debugging on FF/Chr/Saf , throwing a nice toString for Classes and their Methods.
-	(console.log(MyClass.initialize)) // function Initialize(_array, _orderBy) // even params
+	(trace(MyClass.initialize)) // function Initialize(_array, _orderBy) // even params
+	- comes with debugging 'trace' method, that enhances 'console.log' to all browsers.
 	
 	
 - OOP implemented on heavy expectations :
@@ -186,8 +187,9 @@ Key-properties :
 - protoinit
 - statics
 - inherits
+- mixins
 - interfaces
-	
+
 
 Pkg - Namespace as a string
 
@@ -279,6 +281,56 @@ Inherits - Object
 The way to extend a superclass.
 accepts namespace strings, Object definitions, other objects, and Type's internal Slot objects 
 that we will examine later.
+
+Mixins - Array
+
+The way to copy prototypes of multiple superclasses, without extending them (or beeing instances of these superclasses).
+Indeed, on the opposite way Inherits does, the prototypes extended through mixins will respond 'false' to 'instanceof' checks.
+Mixins are also passable in parameters of Type.define : 
+
+	var Myclass ;
+	Type.define({
+		constructor:MyClass = MyClass {
+			[...]
+		}
+	}, MyExtendMixin, MyExtendMixin2, [MyMixinSet1, MyMixinSet2, ...], ...)
+
+they remain writable in the definition object :
+
+	var Myclass ;
+	Type.define({
+		mixins:[My ExtendedMixin, [MyMixinSet1, ...], ...], // must be an array here, should it be an array of one
+		constructor:MyClass = MyClass {
+			[...]
+		}
+	})
+
+but if there are any passed in parameters, your 'mixins' array in definition object will be lost
+overriden by those passed in parameters.
+
+You have access to those mixins anyway through the 'model' property of Slot Objects in Classes, as we'll see in API.
+
+	var MyClass ;
+	Type.define({
+		inherits:EventDispatcher,
+		constructor:MyClass = function MyClass(){
+			trace(this)
+			trace(MyClass.slot.model.mixins[0]).apply(this, [window]) ;
+			
+			var t = this ;
+			// ready as an EventDispatcher
+			this.bind('load', function(e){
+				trace('LOAD', e.type)
+			})
+		}
+	}, IEvent, {
+		constructor:function doThis(){
+			trace("I should probably do this") ;
+		}
+	})
+
+By the way something you never should want to do, combine Event and EventDispatcher, but if you still want you can.
+
 
 
 Interfaces - Array
@@ -408,12 +460,14 @@ properties or method contained in the superclass prototype (as in super.mysuperm
 Slot
 
 Slot is Type's internal way of storing package information. Existing with properties :
-- appdomain : the context domain where class definition was first declared / stored
+- appdomain : the context domain where class definition was first declared / stored, undefined if unset (directly through Type.define)
 - pkg : the full path of the package containg Class definition
 - qualifiedclassname : the short name of the Class definition
 - fullqualifiedclassname : the full path to Class definition
 - hashcode : the generated-unique internal identifier
 - isinterface : a boolean that stores whether Class definition is an Interface instead.
+- model : the base influence model of the definition a.k.a. the object passed as 'properties', 
+including its live modifications.
 
 
 Now its only a matter of getting used to it, and perhaps talk about the Type and Pkg objects API 
@@ -422,28 +476,60 @@ before ending these notes.
 Type and Pkg have few static methods and props to dialog easier with these class objects, 
 and perform checks onto them :
 
-Type :
-- globals : [Object] 
-- appdomain : [Object]
-- guid : [int]
+Type : 
+- appdomain : [Object], the native window object
+- guid : [int], an internal incrementing integer, used for hashcode
+- merge(from, into, nocheck)
+	merge is used internally by Type to merge two objects, the first 'from' into 'into'.
+	Can become useful for cloning / duplicating properties, 
+	the 'nocheck' boolean will bypass all safetychecks concerning rewriting of 
+	core properties /constructor|hashCode|hashcode|toString|model|pkg|(app)?domain/.
 - format(type)
+	Format is the internal function supposed to spit always a Class object, 
+	from either fullqualifiedclassname, slot, hashcode,
+	array of types(in that case returning an array of Class objects),
+	or unknown other classes.
 - hash(qname)
-- define(properties)
+	Hash is the internal function that generates an unique hash to each definition
+- define(properties, mixins)
+	Define is the main public method of Type.
+	Allowing to create instances of Class Objects, building Class Definitions.
+	'properties' is an anonymous object storing the model of that Definition, 
+	while 'mixins' are used as eventual plugs, clonings, without erasing proper prototype
+	and definition (and slot, hashcode, et...).
 - implement(definition, interfaces)
+	Implement is the internal function that makes the application throw an error if an Interface has been wrongly implemented.
 - is(instance, definition)
+	Public method that performs and returns the 'instanceof' check
+- of(instance, typestr)
+	Public method that returns the 'typeof' check on an instance 'instance' with 'typestr',
+	if 'typestr' is omitted, just returns the type string.
 - definition(qobj, domain)
+	Public method to retrieve a Class, given the Class Name, shorthand for getDefinitionByName
 - getType(type)
+	Public method to retrieve a Class Definition Type slot, given the Class Definition.
+	if definition is an unknown type, returns the string 'unregister_type'
 - getQualifiedClassName(type)
+	Public method to retrieve a Class Definition Name string, given the Class Definition.
 - getFullQualifiedClassName(type)
+	Public method to retrieve a Class Definition Full Qualified Class Name string, given the Class Definition.
 - getDefinitionByName(qname, domain)
+	Retrieves a Definition from a fullqualifiedclassname, or a qualifiedclassname
 - getDefinitionByHash(hashcode)
+	Retrieves a Definition from a hashcode
 - getAllDefinitions()
+	Returns the storing object of all Type-registered definitions
 	
 Pkg :
 - register(path, definition)
 - write(path, obj)
 - definition(path)
+	Public method to retrieve a Class, given the Class Name, shorthand for getDefinitionByName
 - getAllDefinitions()
+	Returns the storing object of all Pkg-registered definitions, NOT the same as in Type, 
+	storage in Pkg is more human readable indeed, since in Type, definitions are stored as integers, 
+	plus the fact that some Type.define calls with no 'domain' specification, will not be written in Pkg, but
+	still in Type.
 
 
 
