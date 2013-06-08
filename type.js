@@ -2,18 +2,18 @@
  * Type
  * Essential Classes and Packages for Javascript
  * 
- * V 0.9.8
+ * V 0.9.9
  * 
- * Dependancies : 
+ * Dependancies :
  * 	none
  * 
  * An utility inspired by Mitsuhiko's Classy.js for features (https://github.com/mitsuhiko/classy)
- * but by Ornorm for theorical key-concepts, nominations (abiendo@gmail.com) 
- * 
+ * but by Ornorm for theorical key-concepts, namings and beautiful hack ideas (abiendo[(at)gmail.com])
  * 
  * 
  * authored under Spark Project License
- * by author saz aka True
+ * 
+ * by saz aka True
  * sazaam[(at)gmail.com]
  * 2012-2012
  * 
