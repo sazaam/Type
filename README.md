@@ -1,4 +1,4 @@
-Type
+Type.js
 ====
 
 Essential Type and Packages for Javascript
