@@ -31,20 +31,12 @@
 		if(definition !== undefined) this[name] = ('function' === typeof definition) ? definition() : definition ;
 	}
 	
-})('type',
-	
-	(function(){
-		
+})('type', (function(){
+
 		('undefined' === typeof Pkg && 'undefined' === typeof Pkg && (function(){
-		
+			
 			var sl = [].slice ;
-			var trace = window.trace = function trace(){
-				if(window.console === undefined) return arguments[arguments.length - 1] ;
-				if('apply' in console.log) console.log.apply(console, arguments) ;
-				else console.log([].concat(sl.call(arguments))) ;
-				return arguments[arguments.length - 1] ;
-			},
-			name_r = /function([^\(]+)/, pkg_r = /::(.+)$/, abs_r = /^\//, DEFS = {}, PKG_SEP = '::',
+			var name_r = /function([^\(]+)/, pkg_r = /::(.+)$/, abs_r = /^\//, DEFS = {}, PKG_SEP = '::',
 			getctorname = function(cl, name){ return (cl = cl.match(name_r))? cl[1].replace(' ', ''):'' },
 			keep_r = /constructor|hashCode|hashcode|toString|model|pkg|(app)?domain/,
 			retrieve = function retrieve(from, prop, p){ try { p = from[prop] ; return p } finally { if(prop != 'constructor') from[prop] = undefined , delete from[prop] }},
@@ -272,6 +264,7 @@
 						}
 						// if a function is passed
 						else if(Type.of(obj, 'function')){
+							
 							if(!!obj.slot) return Pkg.register(path, obj) ;
 							var o = new (obj)(path) ;
 							if(Type.is(obj, Array)){
@@ -296,12 +289,16 @@
 				getAllDefinitions:function getAllDefinitions(){ return PKG }
 			}
 			// GLOBALS
+			
 			window.Type = Type ;
 			window.Pkg = Pkg ;
 			
 			return Type ;
 		})()) ;
-		
-		
+
+
+
+
+
 	})()
 )
