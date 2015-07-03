@@ -141,7 +141,7 @@ Two actual ways to declare Objects with Type :
 		var Example = Pkg.write(
 			'com.example.mypkg.examples', 
 			{
-				domain:window,
+				domain:Type.appdomain, // which is generally window if not set to something else
 				constructor:function AbstractExample(id){
 					this.id = id ;
 				},
@@ -151,7 +151,7 @@ Two actual ways to declare Objects with Type :
 				}
 			},
 			{
-				domain:window,
+				domain:Type.appdomain,
 				inherits:'com.example.mypkg.examples::AbstractExample',
 				constructor:Example = function Example(id){
 					Example.base.apply(this, arguments) ;
@@ -360,7 +360,7 @@ The recommended way of declaring interfaces :
 	var Example = Pkg.write(
 		'com.example.mypkg.examples', 
 		{
-			domain:window,
+			domain:Type.appdomain,
 			inherits:'com.example.mypkg.examples::AbstractExample',
 			interfaces:[IExample],
 			constructor:Example = function Example(id){
@@ -477,7 +477,7 @@ Type and Pkg have few static methods and props to dialog easier with these class
 and perform checks onto them :
 
 Type : 
-- appdomain : [Object], the native window object
+- appdomain : [Object], set by default to the native window object, is a public static variable, so feel free to change it to different scopes if needed, in case of larger frameworks, or else
 - guid : [int], an internal incrementing integer, used for hashcode
 - merge(from, into, nocheck)
 	merge is used internally by Type to merge two objects, the first 'from' into 'into'.
