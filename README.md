@@ -68,6 +68,7 @@ Two actual ways to declare Objects with Type :
 				this.id = id ;
 			},
 			destroy:function destroy(){
+				for(var s in this) delete this[s] ;
 				trace('example destroyed...') ;
 				return undefined ;
 			}
@@ -78,16 +79,16 @@ Two actual ways to declare Objects with Type :
 			inherits:AbstractExample,
 			constructor:Example = function Example(id){
 				Example.base.apply(this, arguments) ;
-				this.id = id ;
+				trace(this.id) ;
 			}
 		}) ;
-		
-		var ex = new Example('test_example') ;
 		
 		trace(Example) ; 
 			// [Class com.example.mypkg.examples::Example]
 		trace(Example === Type.definition('com.example.mypkg.examples::Example')) 
 			// true
+		
+		var ex = new Example('test_example') ;
 		
 		trace(ex instanceof AbstractExample) // true
 		trace(ex.destroy) ; // function destroy(...)
