@@ -141,7 +141,7 @@ Two actual ways to declare Objects with Type :
 		var Example = Pkg.write(
 			'com.example.mypkg.examples', 
 			{
-				domain:Type.appdomain, // which is generally window if not set to something else
+				domain:Type.appdomain, // which is window by default
 				constructor:function AbstractExample(id){
 					this.id = id ;
 				},
