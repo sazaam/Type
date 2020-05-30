@@ -21,17 +21,17 @@
 
 'use strict' ;
 
-(function(definition, root){
+(function(name, definition){
 	
 	if ('function' === typeof define){ // AMD
-		define(('function' === typeof definition) ? definition() : definition) ;
+		define(definition) ;
 	} else if ('undefined' !== typeof module && module.exports) { // Node.js
 		module.exports = ('function' === typeof definition) ? definition() : definition ;
 	} else {
-		if(definition !== undefined) root[name] = ('function' === typeof definition) ? definition() : definition ;
+		if(definition !== undefined) this[name] = ('function' === typeof definition) ? definition() : definition ;
 	}
 	
-})((function(){
+})('type', (function(){
 
 		('undefined' === typeof Pkg && 'undefined' === typeof Pkg && (function(){
 			
@@ -42,10 +42,12 @@
 			retrieve = function retrieve(from, prop, p){ try { p = from[prop] ; return p } finally { if(prop != 'constructor') from[prop] = undefined , delete from[prop] }},
 			merge = function(from, into, nocheck){ 
 				for(var s in from) {
+					
 					if(!keep_r.test(s) || nocheck === true) {
 						into[s] = from[s] ;
 						if(nocheck !== true) {
-							delete from[s] ;
+							if(!!!window.opera) delete from[s] ;
+							else from[s] = undefined ;
 						}
 					} ;
 				}
@@ -78,6 +80,7 @@
 					customs[customs.length] = closure ;
 				},
 				customize:function(properties, def){
+					if(customs.length)
 					for(var i = 0 ; i < customs.length ; i++){
 						properties = customs[i](properties, def) ;
 					}
@@ -86,28 +89,22 @@
 				define:function define(properties, mixins){
 					
 					var args = sl.call(arguments) ;
-					var model,
-					name,
-					basemodel = {} ;
 					properties = args.shift() ;
 					mixins = args ;
-
-					// if properties doesn't come as Object but as function, run that function
+					var model, basemodel = {} ;
 					if(Type.of(properties, 'function')) {
 						var m = properties() ;
 						model = merge(m, basemodel, true) ;
 						return Type.define.apply(Type, [model].concat(mixins)) ;
 					}
-					// writing mixins, passed-as-argument ones, and passed-in-properties-object ones, together as one Array
-					!!mixins.length && (properties.mixins = (properties.mixins || []).concat(mixins)) ;
-
+					
+					if(mixins.length) properties.mixins = mixins ;
 					model = merge(properties, basemodel, true) ;
 					
-					var staticinit ;
-					var isinterface = false ;
+					var staticinit , isinterface = false ;
+					var domain = retrieve(properties, 'domain') ;
 					var pkg = retrieve(properties, 'pkg') || '' ;
 					var def = retrieve(properties, 'constructor') ;
-					var domain = retrieve(properties, 'domain') ;
 					
 					var defIsObject = def == Object ;
 					
@@ -115,32 +112,34 @@
 						isinterface = true ;
 						pkg = pkg.replace('@', '') ;
 					}
-					// find & write constructor name of Class if foundable
-					name = defIsObject ? '' : (def.name || getctorname(def.toString())).replace(/Constructor$/, '') ;
-					// maybe name stands in the package path, as in 'examples::AbstratcExample'
-					pkg_r.test(pkg) && (pkg = pkg.replace(pkg_r, function(){name = arguments[1]; return ''})) ;
-					// while we're at it, treat package path, as to work fine with Pkg,register() 
-					!!Type.hackpath && (pkg = abs_r.test(pkg) ? pkg.replace(abs_r, '') : pkg !='' ? Type.hackpath +(pkg.indexOf('.') == 0 ? pkg : '.'+ pkg) : Type.hackpath) ;
-					// if name was REALLY not able to be found, write anonymous constructor name for Class
-					name == '' && (name = 'Anonymous'+(++Type.guid)) ;
+					var name = defIsObject ? '' : (def.name || getctorname(def.toString())).replace(/Constructor$/, '') ;
 					
-					defIsObject && (def = Function('return function '+name+'(){\n\t \n}')()) ;
+					if(pkg_r.test(pkg)) pkg = pkg.replace(pkg_r, function(){name = arguments[1]; return ''}) ;
 					
-					// if custom treatments to Type.define, run them
-					!!customs.length && (properties = Type.customize(properties, def)) ;
+					if(!!Type.hackpath) pkg = abs_r.test(pkg) ? pkg.replace(abs_r, '') : pkg !='' ? Type.hackpath +(pkg.indexOf('.') == 0 ? pkg : '.'+ pkg) : Type.hackpath ;
 					
-					var statics = retrieve(properties, 'statics') ;
-					var protoinit = retrieve(properties, 'protoinit') ;
+					if(name == '' ) name = 'Anonymous'+(++Type.guid) ;
+					
+					if(defIsObject) 
+						def = Function('return function '+name+'(){\n\t \n}')() ;
+					
+					properties = Type.customize(properties, def) ;
+					
+					var mixes = retrieve(properties, 'mixins') ;
 					var superclass = retrieve(properties, 'inherits') ;
 					var interfaces = retrieve(properties, 'interfaces') ;
-					var mixes = retrieve(properties, 'mixins') ;
+					var statics = retrieve(properties, 'statics') ;
+					var protoinit = retrieve(properties, 'protoinit') ;
+					
 					
 					superclass = Type.format(superclass) || Object ;
 					interfaces = Type.format(interfaces) || [] ;
-					// qualified Classname & unique HashCode
+					
+					// set hashCode here
 					var qname = pkg == '' ? name : pkg + PKG_SEP + name ;
 					var hash = Type.hash(qname) ;
-					// write internal Class definition Object & its associated Slot Object
+					
+					// write classes w/ hash reference and if domain is specified, in domain
 					(DEFS[hash] = def).slot = {
 						appdomain:domain,
 						qualifiedclassname:name,
@@ -151,50 +150,50 @@
 						model:model,
 						toString:function toString(){ return 'Type@'+qname+'Definition'}
 					} ;
-
+					
+					
 					def.toString = function toString(){ return '[' + ( isinterface ? "interface " : "class " ) + qname + ']' }
 					
-					// if given a domain to write definition on, store definition
+					// set defaults
 					!! domain && (domain[name] = def) ; // Alias checks, we don't want our anonymous classes to endup in window or else
-					// Type knows actual path of Class registration
-					!!Type.hackpath && Pkg.register(qname, def) ;
+					(!!Type.hackpath) && Pkg.register(qname, def) ;
 					
-					// Class Definition Constructor Prototype
 					var T = function(){
-						// Base and Factory needed since now
+						// set base & factory references
 						def.base = superclass ;
 						def.factory = superclass.prototype ;
 						// write overrides
 						merge(properties, this, false) ;
+						
 						this.constructor = def ;
 					}
-					// Prototype instanciation --- #@!&% The clean-prototype-hack part
+					
 					T.prototype = superclass.prototype ;
 					def.prototype = new T() ;
 					
-					// raw implementation of mixins
-					(function(plugs){
+					
+					(function plug(plugs){
 						if(!!!plugs) return ;
 						var l = plugs.length ;
 						for(var i = 0 ; i < l ; i++){
 							var mix = plugs[i] ;
-							if(Type.is(mix, Array) && mix.length) arguments.callee(mix) ; 
+							if(Type.is(mix, Array) && mix.length) plug(mix) ; 
 							else if(!! mix.slot) merge(mix.slot.model, def.prototype, false) ; 
 							else merge(mix, def.prototype, false) ;
 						}
 					})(mixes) ;
 					
-					// protoinit = when Prototype is inited
+					
+					// protoinit 
 					if (!!protoinit) protoinit.apply(def.prototype, [def, domain]) ;
 					
-					// statics as Class-level definitions, class static properties & methods
+					
 					if (!!statics) {
 						staticinit = retrieve(statics, 'initialize') ;
 						merge(statics, def, false) ;
 					}
 					// static initialize
 					if(!!staticinit) staticinit.apply(def, [def, domain]) ;
-					// implementing interfaces
 					Type.implement(def, interfaces.concat(superclass.slot ? superclass.slot.interfaces || [] : [])) ;
 					return def ;
 				},
@@ -301,5 +300,5 @@
 
 
 
-	})(), window
+	})()
 )
