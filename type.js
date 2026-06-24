@@ -218,6 +218,12 @@
 				},
 				is:function is(instance, definition){ return instance instanceof definition },
 				of:function of(instance, typestr){ return (!!typestr) ? (typeof instance === typestr) : (typeof instance) },
+				make:function make(constructor){
+					var args = sl.call(arguments, 1);
+					function F(){ constructor.apply(this, args); }
+					F.prototype = constructor.prototype;
+					return new F();
+				},
 				definition:function definition(qobj, domain){return Type.getDefinitionByName(qobj, domain)},
 				getType:function getType(type){ return (!!type.constructor && !!type.constructor.slot) ? type.constructor.slot : type.slot || 'unregistered_type'},
 				getQualifiedClassName:function getQualifiedClassName(type){ return Type.getType(type).toString() },
